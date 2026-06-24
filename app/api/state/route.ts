@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { scorePredictions } from "@/lib/scoring";
+import { syncResultFromApi } from "@/lib/syncResult";
 import type { MatchState, Prediction } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,16 @@ export const dynamic = "force-dynamic";
 // score is in — so nobody can copy a relative's guess before kickoff.
 export async function GET() {
   const supabaseAdmin = getSupabaseAdmin();
+
+  // Family-page-driven auto result: while the match is live, the first poll
+  // past the 3-min throttle window checks the football API and records the
+  // final score. Best-effort — never let a sync hiccup break the page.
+  try {
+    await syncResultFromApi();
+  } catch {
+    /* ignore — manual entry and the admin button remain as backups */
+  }
+
   const { data: stateRow, error: stateErr } = await supabaseAdmin
     .from("match_state")
     .select("*")

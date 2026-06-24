@@ -19,15 +19,18 @@ Built with **Next.js + Supabase**, deploys to **Vercel**.
 
 ## How the result reaches the app (two paths, both built in)
 
-1. **Automatic** — `/api/sync` polls API-Football for your fixture and writes the
-   final score once the match status is `FT`/`AET`/`PEN`. A Vercel Cron hits it
-   every 2 minutes during the match. The admin page also has a one-tap
-   "Sincronizar ahora" button.
+1. **Automatic (page-driven)** — every phone polls `/api/state` every 15s. While
+   the match is live, that endpoint checks API-Football for your fixture and
+   records the final score once the status is `FT`/`AET`/`PEN`. Calls to the
+   football API are throttled to once every 3 minutes (shared across all
+   visitors) so the free-tier 100/day quota is never exceeded. The `/admin` page
+   also has a one-tap "Sincronizar ahora" button (forces an immediate check).
 2. **Manual backup** — the `/admin` page lets you type the final score by hand.
    This always works, even with no API key.
 
-Either way, every phone polls `/api/state` every 15 seconds, so the winner
-appears for the whole family within ~15s of the score being set.
+Because the family is watching the page at the final whistle, the reveal
+triggers itself — no cron job or paid plan required. The winner appears for
+everyone within ~15s of the score being recorded.
 
 ---
 
@@ -61,15 +64,13 @@ Open http://localhost:3000 (and http://localhost:3000/admin).
 ### 5. Deploy to Vercel
 1. Push this folder to a GitHub repo.
 2. Import it at https://vercel.com/new.
-3. Add the same env vars under **Project → Settings → Environment Variables**
-   (including `CRON_SECRET` — Vercel automatically sends it as the cron's
-   `Authorization: Bearer` token).
+3. Add the same env vars under **Project → Settings → Environment Variables**.
 4. Deploy. Share the URL with the family.
 
-> **Note on Vercel Cron:** the Hobby (free) plan may run crons less often than
-> every 2 minutes. If auto-sync seems slow, just tap **"Sincronizar ahora"** on
-> the admin page once the match ends, or type the final score manually — the
-> reveal is instant either way.
+> **No cron / no paid plan needed.** The result sync is driven by the family
+> page itself (see "How the result reaches the app" above), so the free Hobby
+> plan is enough. If the auto-sync ever lags, tap **"Sincronizar ahora"** on the
+> admin page or type the final score manually — the reveal is instant either way.
 
 ---
 
